@@ -58,7 +58,7 @@ AC_ARG_WITH([qthreads],
                       [yes|no], [],
                       [CFLAGS="-DOSU_USE_QTHREADS -I$with_qthreads/include $CFLAGS"
                        CPPFLAGS="-DOSU_USE_QTHREADS -I$with_qthreads/include $CPPFLAGS"
-                       LDFLAGS="-L$with_qthreads/lib -Wl,-rpath=$with_qthreads/lib -labt $LDFLAGS"])
+                       LDFLAGS="-L$with_qthreads/lib -Wl,-rpath=$with_qthreads/lib -lqthread $LDFLAGS"])
              ])
 
 AC_ARG_WITH([cuda-include],
