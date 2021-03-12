@@ -8,6 +8,8 @@ AC_CONFIG_SRCDIR([mpi/pt2pt/osu_latency.c])
 AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 
+AC_CONFIG_MACRO_DIR([m4])
+
 dnl
 dnl Add NVCCFLAGS for additional flags
 dnl

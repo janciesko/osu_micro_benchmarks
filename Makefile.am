@@ -1,5 +1,5 @@
 SUBDIRS =
-
+ACLOCAL_AMFLAGS = -I m4
 if CUDA
     dist_pkglibexec_SCRIPTS = get_local_rank
 endif
