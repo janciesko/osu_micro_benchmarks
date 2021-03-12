@@ -1,0 +1,8 @@
+build
+*.log
+*.status
+*.o
+*Makefile
+*.deps
+*.dirstamp
+libtool
