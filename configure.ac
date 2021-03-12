@@ -14,6 +14,13 @@ dnl
 AC_ARG_VAR(NVCCFLAGS,
 	[extra NVCCFLAGS used in building OMB with CUDA kernel support])
 
+AC_ARG_ENABLE([qthreads],
+               [AS_HELP_STRING([--enable-qthreads],
+             [Enable QThreads.])
+               ],
+               [],
+               [enable_qthreads=no])
+
 AC_ARG_ENABLE([openacc],
               [AS_HELP_STRING([--enable-openacc],
                               [Enable OpenACC benchmarks])
@@ -40,6 +47,17 @@ AC_ARG_WITH([cuda],
                      [CPPFLAGS="-I$with_cuda/include $CPPFLAGS"
                       LDFLAGS="-L$with_cuda/lib64 -Wl,-rpath=$with_cuda/lib64 -L$with_cuda/lib -Wl,-rpath=$with_cuda/lib $LDFLAGS"])
             ])
+
+AC_ARG_WITH([qthreads],
+             [AS_HELP_STRING([--with-qthreads=@<:@QThreads installation path@:>@],
+                             [Provide path to QThreads installation])
+             ],
+             [AS_CASE([$with_qthreads],
+                      [yes|no], [],
+                      [CFLAGS="-DOSU_USE_QTHREADS -I$with_qthreads/include $CFLAGS"
+                       CPPFLAGS="-DOSU_USE_QTHREADS -I$with_qthreads/include $CPPFLAGS"
+                       LDFLAGS="-L$with_qthreads/lib -Wl,-rpath=$with_qthreads/lib -labt $LDFLAGS"])
+             ])
 
 AC_ARG_WITH([cuda-include],
             [AS_HELP_STRING([--with-cuda-include=@<:@CUDA include path@:>@],
