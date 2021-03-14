@@ -19,6 +19,7 @@ typedef pthread_mutex_t thread_mutex_t;
 typedef pthread_cond_t thread_cond_t;
 typedef pthread_barrier_t thread_barrier_t;
 typedef pthread_t thread_t;
+typedef void ret_type;
 
 void init_threading()
 {
@@ -89,15 +90,14 @@ int thread_barrier_wait(thread_barrier_t *barrier)
 #include <qthread/barrier.h>
 
 typedef aligned_t atomic_int32_t;
-
 typedef atomic_int32_t thread_lock_t;
 typedef atomic_int32_t thread_mutex_t;
 typedef atomic_int32_t thread_cond_t;
+typedef aligned_t ret_type;
 
 typedef struct {
-    qthread_f task;
-    void *arg;
-    aligned_t *retval;
+    aligned_t retval;
+    aligned_t * retval_ptr;
 } qt_thread_t;
 
 typedef qt_barrier_t thread_barrier_t;
@@ -116,7 +116,7 @@ void finalize_threading()
 
 int atomic_lock_init(thread_lock_t *lock, const void *attr)
 {
-    *lock = 0;
+    * lock = 0;
     return SUCCESS;
 }
 
@@ -139,20 +139,18 @@ int thread_barrier_init(thread_barrier_t ** barrier, const void *attr,
 }
 
 int thread_create(thread_t *thread, const void *attr,
-                  qthread_f task, void *arg)
+                   qthread_f task, void *arg)
 {
-    thread->task = task;
-    thread->arg = arg;
-    thread->retval = (aligned_t *) &thread->retval;
-    qthread_fork(thread->task, thread->arg, thread->retval);
+    thread->retval_ptr = &thread->retval;
+    qthread_fork(task, arg, thread->retval_ptr);
     return SUCCESS;
 }
 
 int thread_join(thread_t thread, void **retval)
 {
-    qthread_readFF(NULL, thread.retval);
+    qthread_readFF(NULL, thread.retval_ptr);
     if (retval)
-        *retval = thread.retval;
+        * retval = thread.retval_ptr;
     return SUCCESS;
 }
 
@@ -192,6 +190,7 @@ int thread_barrier_wait(thread_barrier_t ** barrier)
 #endif
 
 thread_barrier_t * sender_barrier;
+thread_barrier_t * all_barrier;
 thread_mutex_t finished_size_mutex;
 thread_cond_t finished_size_cond;
 thread_mutex_t finished_size_sender_mutex;
@@ -207,8 +206,8 @@ typedef struct thread_tag  {
         int id;
 } thread_tag_t;
 
-aligned_t send_thread(void *arg);
-aligned_t recv_thread(void *arg);
+ret_type send_thread(void *arg);
+ret_type recv_thread(void *arg);
 
 int main(int argc, char *argv[])
 {
@@ -318,6 +317,7 @@ int main(int argc, char *argv[])
     }
 
     thread_barrier_init(&sender_barrier, NULL, num_threads_sender);
+    thread_barrier_init(&all_barrier, NULL, num_threads_sender + options.num_threads);
 
     if (myid == 0) {
         #ifdef CSV_OUTPUT
@@ -348,13 +348,14 @@ int main(int argc, char *argv[])
         }
     }
 
+   // thread_barrier_wait(&all_barrier); //FIXME
     MPI_CHECK(MPI_Finalize());
     finalize_threading();
 
     return EXIT_SUCCESS;
 }
 
-aligned_t recv_thread(void *arg)
+ret_type recv_thread(void *arg)
 {
     int size = 0, i = 0, val = 0;
     int iter = 0;
@@ -410,7 +411,6 @@ aligned_t recv_thread(void *arg)
         set_buffer_pt2pt(s_buf, myid, options.accel, 'a', size);
         set_buffer_pt2pt(r_buf, myid, options.accel, 'b', size);
 
-        //fprintf(stdout, "A:%i\n", val);
         fflush(stdout);
 
         for (i = val; i < (options.iterations + options.skip);
@@ -435,7 +435,7 @@ aligned_t recv_thread(void *arg)
     return 0;
 }
 
-aligned_t send_thread(void *arg)
+ret_type send_thread(void *arg)
 {
     int size = 0, i = 0, val = 0, iter = 0;
     int myid = 0;
